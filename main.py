@@ -2,10 +2,10 @@ from random import randint
 import imagemaker as im
 from PIL import Image
 
-WIDTH = 1920
-HEIGHT = 1080
+WIDTH = 800
+HEIGHT = 800
 
-START_COLOUR = (118, 150, 250)
+START_COLOUR = (200, 200, 200)
 START_LOCATIONS = [(randint(0, WIDTH-1), randint(0,HEIGHT-1))]
 
 canvas = im.MakeCanvas(WIDTH, HEIGHT)
@@ -13,17 +13,18 @@ canvas = im.MakeCanvas(WIDTH, HEIGHT)
 #must start out with one partially explored
 
 #if has some value but not all neighbors explored
+#this method shaves tome for 1920x1080 image down to around 60secs
 partialExplored = dict()
 highestInd=0
-#each will have form (x, y) where x and y are position in the image
+#each value will have form (x, y) where x and y are position in the image
 
 #takenColours=set()#will only use if it is otherwise uninteresting
 
 #value has form (r,g,b)
 def OneDiffPixel(value):
-    pixelMod= -9
+    pixelMod= -5
     if(randint(0,1)==1):
-        pixelMod= 8
+        pixelMod= 5
 
     pixelPart = randint(0, 2)
     result = None
@@ -83,22 +84,25 @@ def VisitPixel(location, index):
 
 def CheckDuplicates(canvas):
     distinctCols = set()
-    Duplicates = 0
     for col in canvas:
         for el in col:
-            if el in distinctCols:
-                Duplicates+=1
-            else:
-                distinctCols.add(el)
-    return Duplicates
+            distinctCols.add(el)
+    return (WIDTH*HEIGHT) - len(distinctCols)
+
 
 def AddToDict(el):
     global highestInd
     highestInd = len(partialExplored)
     partialExplored[len(partialExplored)] = el
 
-#if numPixel is 4 will pick every 13th pixel to add to image
-def MakeFromFile(fileName="P1250945.png", numPixels=27):
+def RGBify(pixel):
+    if len(pixel) == 3:
+        return pixel
+    else:#is in rgba
+        return (pixel[0], pixel[1], pixel[2])
+
+#if numPixel is 4 will pick every 4th pixel to add to image
+def MakeFromFile(fileName="luca.jpg", numPixels=100, robotic=False):
     global WIDTH
     global HEIGHT
     global canvas
@@ -119,14 +123,28 @@ def MakeFromFile(fileName="P1250945.png", numPixels=27):
     counter=0
     for i in range(width):
         for j in range(height):
-            if counter % numPixels==0:
-                Explore(i, j, pix[i,j])
+            if (robotic and counter % numPixels==0) or (not robotic and randint(0, numPixels) < 1):
+                Explore(i, j, RGBify(pix[i,j]))
             counter+=1
 
-def Main():
-
-    MakeFromFile("P1250945.png", 7)
     print("done initializiing from file")
+
+# def CheckForErrors(canvas):
+#     for col in canvas:
+#         for el in col:
+#             if(type(el) != tuple) or len(el) != 3:
+#                 print("ERROR", el)
+#             for pixel in range(3):
+#                 if type(pixel) != int:
+#                     print("ERROR", el)
+            
+
+def Main():
+    print("starting image generation")
+
+    #can only have one MakeFromFile otherwise will probably crash
+    #MakeFromFile("P1250945.png", 100)#liam
+    #MakeFromFile("luca.jpg", 80)
 
     for location in START_LOCATIONS:
         Explore(location[0], location[1], START_COLOUR)
@@ -139,9 +157,11 @@ def Main():
 
         VisitPixel(nextLocation, nextInd)
 
-    print("it took {} steps".format(i))
-    print("there are {} duplicates".format(CheckDuplicates(canvas)))
+    #CheckForErrors(canvas)
 
+    print("it took {} steps".format(i))
+    print("by there were {} duplicates".format(CheckDuplicates(canvas)))
+    print("creating image...\n")
     im.FormImage(canvas)
 
 Main()
