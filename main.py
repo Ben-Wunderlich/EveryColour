@@ -22,9 +22,9 @@ highestInd=0
 
 #value has form (r,g,b)
 def OneDiffPixel(value):
-    pixelMod= -5
+    pixelMod= -8
     if(randint(0,1)==1):
-        pixelMod= 5
+        pixelMod= 8
 
     pixelPart = randint(0, 2)
     result = None
@@ -93,7 +93,7 @@ def CheckDuplicates(canvas):
 def AddToDict(el):
     global highestInd
     highestInd = len(partialExplored)
-    partialExplored[len(partialExplored)] = el
+    partialExplored[highestInd] = el
 
 def RGBify(pixel):
     if len(pixel) == 3:
@@ -102,7 +102,7 @@ def RGBify(pixel):
         return (pixel[0], pixel[1], pixel[2])
 
 #if numPixel is 4 will pick every 4th pixel to add to image
-def MakeFromFile(fileName="luca.jpg", numPixels=100, robotic=False):
+def MakeFromFile(fileName="luca.jpg", numPixels=80, robotic=False):
     global WIDTH
     global HEIGHT
     global canvas
@@ -129,25 +129,27 @@ def MakeFromFile(fileName="luca.jpg", numPixels=100, robotic=False):
 
     print("done initializiing from file")
 
-# def CheckForErrors(canvas):
-#     for col in canvas:
-#         for el in col:
-#             if(type(el) != tuple) or len(el) != 3:
-#                 print("ERROR", el)
-#             for pixel in range(3):
-#                 if type(pixel) != int:
-#                     print("ERROR", el)
-            
+#not really useful anymore
+def CheckForErrors(canvas):
+    for col in canvas:
+        for el in col:
+            if(type(el) != tuple) or len(el) != 3:
+                print("ERROR", el)
+            for pixel in range(3):
+                if type(pixel) != int:
+                    print("ERROR", el)
 
 def Main():
-    print("starting image generation")
+    print("starting image generation ({}x{}) = {:,} pixels".format(WIDTH, HEIGHT, WIDTH*HEIGHT))
 
     #can only have one MakeFromFile otherwise will probably crash
-    #MakeFromFile("P1250945.png", 100)#liam
+    #MakeFromFile("P1250945.png", 100)
     #MakeFromFile("luca.jpg", 80)
+    #MakeFromFile("half.jpg", 2000)
 
     for location in START_LOCATIONS:
         Explore(location[0], location[1], START_COLOUR)
+
     #choose from random pixel
     i=0
     while len(partialExplored) > 0:
@@ -159,8 +161,8 @@ def Main():
 
     #CheckForErrors(canvas)
 
-    print("it took {} steps".format(i))
-    print("by there were {} duplicates".format(CheckDuplicates(canvas)))
+    print("it took {:,} steps".format(i))
+    print("there are {:,} duplicate pixels".format(CheckDuplicates(canvas)))
     print("creating image...\n")
     im.FormImage(canvas)
 
