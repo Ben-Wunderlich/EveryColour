@@ -2,29 +2,30 @@ from random import randint
 import imagemaker as im
 from PIL import Image
 
-WIDTH = 800
-HEIGHT = 800
+WIDTH = 700
+HEIGHT = 700
 
 START_COLOUR = (200, 200, 200)
 START_LOCATIONS = [(randint(0, WIDTH-1), randint(0,HEIGHT-1))]
+#(randint(0, WIDTH-1), randint(0,HEIGHT-1))
 
 canvas = im.MakeCanvas(WIDTH, HEIGHT)
 
 #must start out with one partially explored
 
 #if has some value but not all neighbors explored
-#this method shaves tome for 1920x1080 image down to around 60secs
+#this method shaves time for 1920x1080 image down to around 60secs
 partialExplored = dict()
 highestInd=0
 #each value will have form (x, y) where x and y are position in the image
 
-#takenColours=set()#will only use if it is otherwise uninteresting
+#takenColours=set()#can be used to make all colours unique but doesnt make it look more interesting
 
 #value has form (r,g,b)
 def OneDiffPixel(value):
-    pixelMod= -8
+    pixelMod = -5
     if(randint(0,1)==1):
-        pixelMod= 8
+        pixelMod = 5
 
     pixelPart = randint(0, 2)
     result = None
@@ -139,29 +140,48 @@ def CheckForErrors(canvas):
                 if type(pixel) != int:
                     print("ERROR", el)
 
+def ExpandFromPixels():
+    #choose from random pixel
+    i=0
+    while len(partialExplored) > 0:
+        i+=1
+        #nextInd = 0#vertical lines
+        #nextInt = len(partialExplored)-1 #horizontal lines
+        #nextInd = randint(0, len(partialExplored)-1)#normal
+        #nextInd = randint(0, 1)# looks wack
+
+        if len(partialExplored) > 5:#coral patttern
+            nextInd = randint(0,4)
+        else: 
+            nextInd=0
+
+        # if randint(0,15)==0:#inside of rock 
+        #     nextInd = randint(0, len(partialExplored)-1)
+        # else:
+        #     nextInd=len(partialExplored)-1
+
+        nextLocation= partialExplored[nextInd]
+
+        VisitPixel(nextLocation, nextInd)
+    return i
+
+
+
 def Main():
     print("starting image generation ({}x{}) = {:,} pixels".format(WIDTH, HEIGHT, WIDTH*HEIGHT))
 
     #can only have one MakeFromFile otherwise will probably crash
     #MakeFromFile("P1250945.png", 100)
     #MakeFromFile("luca.jpg", 80)
-    #MakeFromFile("half.jpg", 2000)
+    #MakeFromFile("book.jpg", 20)
 
     for location in START_LOCATIONS:
         Explore(location[0], location[1], START_COLOUR)
 
-    #choose from random pixel
-    i=0
-    while len(partialExplored) > 0:
-        i+=1
-        nextInd = randint(0, len(partialExplored)-1)
-        nextLocation= partialExplored[nextInd]
-
-        VisitPixel(nextLocation, nextInd)
-
+    stepsTaken = ExpandFromPixels()
     #CheckForErrors(canvas)
 
-    print("it took {:,} steps".format(i))
+    print("it took {:,} steps".format(stepsTaken))
     print("there are {:,} duplicate pixels".format(CheckDuplicates(canvas)))
     print("creating image...\n")
     im.FormImage(canvas)
