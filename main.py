@@ -2,8 +2,11 @@ from random import randint
 import imagemaker as im
 from PIL import Image
 
-WIDTH = 700
-HEIGHT = 700
+from tkinter import *
+import time
+
+WIDTH = 400
+HEIGHT = 400
 
 START_COLOUR = (200, 200, 200)
 START_LOCATIONS = [(randint(0, WIDTH-1), randint(0,HEIGHT-1))]
@@ -23,9 +26,9 @@ highestInd=0
 
 #value has form (r,g,b)
 def OneDiffPixel(value):
-    pixelMod = -5
+    pixelMod = -8
     if(randint(0,1)==1):
-        pixelMod = 5
+        pixelMod = 8
 
     pixelPart = randint(0, 2)
     result = None
@@ -56,26 +59,31 @@ def NewPixelValue(location):
     newVal = OneDiffPixel(currentValue)
     return newVal
 
-def Explore(xLocation, yLocation, pixelValue):
+def toHexa(pixVal):
+    return '#%02x%02x%02x' % pixVal
+
+def Explore(xLocation, yLocation, pixelValue, img=None):
     AddToDict((xLocation, yLocation))
     canvas[xLocation][yLocation] = pixelValue
+    if img is not None:
+        img.put(toHexa(pixelValue), (xLocation, yLocation))
 
-def VisitPixel(location, index):
+def VisitPixel(location, index, img=None):
     global highestInd
     newPixel = NewPixelValue(location)
 
     #check if filled pixel in each direction
     if ValidToExplore(location[0]+1, location[1]):#right
-        Explore(location[0]+1, location[1], newPixel)
+        Explore(location[0]+1, location[1], newPixel, img)
 
     elif ValidToExplore(location[0], location[1]-1):#down
-        Explore(location[0], location[1]-1, newPixel)
+        Explore(location[0], location[1]-1, newPixel, img)
 
     elif ValidToExplore(location[0]-1, location[1]):#left
-        Explore(location[0]-1, location[1], newPixel)
+        Explore(location[0]-1, location[1], newPixel, img)
 
     elif ValidToExplore(location[0], location[1]+1):#up
-        Explore(location[0], location[1]+1, newPixel)
+        Explore(location[0], location[1]+1, newPixel, img)
 
     else:#nowhere is valid
         # partialExplored.remove(location)
@@ -175,6 +183,12 @@ def Main():
     #MakeFromFile("luca.jpg", 80)
     #MakeFromFile("book.jpg", 20)
 
+    # root = tkinter.Tk()
+    # myCanvas = tkinter.Canvas(root, bg="white", height=WIDTH, width=WIDTH)
+    # myCanvas.pack()
+    # root.mainloop()
+
+
     for location in START_LOCATIONS:
         Explore(location[0], location[1], START_COLOUR)
 
@@ -186,4 +200,56 @@ def Main():
     print("creating image...\n")
     im.FormImage(canvas)
 
-Main()
+#Main()
+
+def MakeImageBlack(img, width, height):
+    for x in range(width):
+        for y in range(height):
+            img.put("#000000", (x,y))
+
+
+class boots(object):
+     def __init__(self):
+        self.root = Tk()
+        self.root.configure(bg='black')
+        self.canvas = Canvas(self.root, width=WIDTH, height = HEIGHT)
+        self.canvas.pack()
+        # self.alien1 = self.canvas.create_oval(20, 260, 120, 360, outline='white',         fill='blue')
+        # self.alien2 = self.canvas.create_oval(2, 2, 40, 40, outline='white', fill='red')
+        for location in START_LOCATIONS:
+            Explore(location[0], location[1], START_COLOUR)
+
+        self.img = PhotoImage(width=WIDTH, height=HEIGHT)
+        MakeImageBlack(self.img, WIDTH, HEIGHT)
+        self.canvas.create_image((WIDTH//2, HEIGHT//2), image=self.img, state="normal")
+
+        self.canvas.pack()
+        self.root.after(1, self.animation)
+        self.root.mainloop()
+
+     def animation(self):
+        #time.sleep(5)
+        i=0
+        while len(partialExplored) > 0:
+            #time.sleep(0.001)
+            i+=1
+            #nextInd = randint(0, len(partialExplored)-1)#normal
+            #nextInd = randint(0, 1)# looks wack
+
+            if len(partialExplored) > 5:#coral patttern
+                nextInd = randint(0,4)
+            else: 
+                nextInd=0
+
+            # if randint(0,15)==0:#inside of rock 
+            #     nextInd = randint(0, len(partialExplored)-1)
+            # else:
+            #     nextInd=len(partialExplored)-1
+
+            nextLocation= partialExplored[nextInd]
+
+            VisitPixel(nextLocation, nextInd, self.img)
+            self.canvas.update()
+        print("finished")
+
+boots()
