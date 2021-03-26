@@ -2,10 +2,15 @@ from random import randint
 import imagemaker as im
 from PIL import Image
 
-WIDTH = 700
-HEIGHT = 700
+WIDTH = 800
+HEIGHT = 800
 
 START_COLOUR = (200, 200, 200)
+
+#TARGET_COLOUR = None
+TARGET_COLOUR = (250, 221, 127)#The colour it wants to go towards
+SKEW=1#how much it wants to go towards TARGET_COLOUR
+
 START_LOCATIONS = [(randint(0, WIDTH-1), randint(0,HEIGHT-1))]
 #(randint(0, WIDTH-1), randint(0,HEIGHT-1))
 
@@ -31,16 +36,22 @@ def OneDiffPixel(value):
     result = None
 
     if pixelPart==0:
-        result= (value[0]+pixelMod, value[1], value[2])
+        result= [value[0]+pixelMod, value[1], value[2]]
     elif pixelPart==1:
-        result= (value[0], value[1]+pixelMod, value[2])
+        result= [value[0], value[1]+pixelMod, value[2]]
     else:
-        result= (value[0], value[1], value[2]+pixelMod)
-    
+        result= [value[0], value[1], value[2]+pixelMod]
+
+    if TARGET_COLOUR is not None:
+        if result[pixelPart] < TARGET_COLOUR[pixelPart] and pixelMod > 0:
+            result[pixelPart]+=SKEW
+        elif result[pixelPart] > TARGET_COLOUR[pixelPart] and pixelMod < 0:
+            result[pixelPart]-=SKEW
+
     for part in result:
         if part > 255 or part < 0:
             return OneDiffPixel(value)
-    return result    
+    return tuple(result)    
 
 def ValidToExplore(xLocation, yLocation):
     #if first pixel at location is -1
@@ -80,7 +91,7 @@ def VisitPixel(location, index):
     else:#nowhere is valid
         # partialExplored.remove(location)
         partialExplored[index] = partialExplored[highestInd]
-        del partialExplored[highestInd]
+        del partialExplored[highestInd]#tried using highestInd instead of del but were both 49secs for 1920x1080
         highestInd-=1
 
 def CheckDuplicates(canvas):
