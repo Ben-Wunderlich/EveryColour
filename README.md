@@ -4,7 +4,7 @@ inspired by a challenge to make images with all uniquely coloured pixels
 ## basic version
 ![basic version](https://github.com/Ben-Wunderlich/EveryColour/blob/main/examples/ovUITOPnl4.png)
 
-## with a slower colour change
+## with a slower colour change and different path
 ![slower colour change](https://github.com/Ben-Wunderlich/EveryColour/blob/main/examples/medbaZJBqj.png)
 
 ## using a set as a data structure
