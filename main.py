@@ -2,13 +2,13 @@ from random import randint
 import imagemaker as im
 from PIL import Image
 
-WIDTH = 800
-HEIGHT = 800
+WIDTH = 600
+HEIGHT = 600
 
 START_COLOUR = (200, 200, 200)
 
-#TARGET_COLOUR = None
-TARGET_COLOUR = (250, 221, 127)#The colour it wants to go towards
+TARGET_COLOUR = None
+#TARGET_COLOUR = (250, 221, 127)#The colour it wants to go towards
 SKEW=1#how much it wants to go towards TARGET_COLOUR
 
 START_LOCATIONS = [(randint(0, WIDTH-1), randint(0,HEIGHT-1))]
@@ -28,9 +28,9 @@ highestInd=0
 
 #value has form (r,g,b)
 def OneDiffPixel(value):
-    pixelMod = -5
+    pixelMod = -6
     if(randint(0,1)==1):
-        pixelMod = 5
+        pixelMod = 6
 
     pixelPart = randint(0, 2)
     result = None
@@ -123,7 +123,7 @@ def MakeFromFile(fileName="luca.jpg", numPixels=80, robotic=False):
     pix = img.load()
     width, height = img.size
     img.close()
-    print("transmorfing {} which has dimensions {}x{}".format(fileName, width, height))
+    print("changing to create {} which has dimensions {}x{} ({:,})".format(fileName, width, height, WIDTH*HEIGHT))
 
     WIDTH = width
     HEIGHT = height
@@ -158,13 +158,13 @@ def ExpandFromPixels():
         i+=1
         #nextInd = 0#vertical lines
         #nextInt = len(partialExplored)-1 #horizontal lines
-        #nextInd = randint(0, len(partialExplored)-1)#normal
+        nextInd = randint(0, len(partialExplored)-1)#normal
         #nextInd = randint(0, 1)# looks wack
 
-        if len(partialExplored) > 5:#coral patttern
-            nextInd = randint(0,4)
-        else: 
-            nextInd=0
+        # if len(partialExplored) > 5:#coral patttern
+        #     nextInd = randint(0,4)
+        # else: 
+        #     nextInd=0
 
         # if randint(0,15)==0:#inside of rock 
         #     nextInd = randint(0, len(partialExplored)-1)
@@ -182,9 +182,10 @@ def Main():
     print("starting image generation ({}x{}) = {:,} pixels".format(WIDTH, HEIGHT, WIDTH*HEIGHT))
 
     #can only have one MakeFromFile otherwise will probably crash
-    #MakeFromFile("P1250945.png", 100)
-    #MakeFromFile("luca.jpg", 80)
-    #MakeFromFile("book.jpg", 20)
+    #MakeFromFile("bases\\P1250945.png", 100)
+    #MakeFromFile("bases\\luca.jpg", 80)
+    #MakeFromFile("bases\\viridy.png")
+    #MakeFromFile("bases\\unknown.png", 200)
 
     for location in START_LOCATIONS:
         Explore(location[0], location[1], START_COLOUR)
