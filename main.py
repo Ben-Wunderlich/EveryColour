@@ -1,8 +1,9 @@
 from random import randint
+from tkinter.constants import NW
 import imagemaker as im
 from PIL import Image
 
-from tkinter import *
+from tkinter import Canvas, PhotoImage, TclError, Tk
 from time import sleep
 
 WIDTH = 400
@@ -172,11 +173,18 @@ class VisualImage(object):
     def __init__(self):
         self.root = Tk()
         self.root.configure(bg='black')
-        self.paused=False
+        self.paused=True
+
+        #MakeFromFile("bases\\luca.jpg", 150)
+
 
         def PauseToggle(event):
             if(event.char == 'p'):
                 self.paused = not self.paused
+            if self.paused:
+                print("pauseing")
+            else:
+                print("no longer paused")
 
         self.root.bind("<Key>", PauseToggle)
         self.canvas = Canvas(self.root, width=WIDTH, height = HEIGHT)
@@ -186,8 +194,6 @@ class VisualImage(object):
         for location in START_LOCATIONS:
             Explore(location[0], location[1], START_COLOUR)
 
-        self.canvas = MakeFromFile()
-
         self.img = PhotoImage(width=WIDTH, height=HEIGHT)
         MakeImageBlack(self.img, WIDTH, HEIGHT)
         self.canvas.create_image((0, 0), image=self.img, state="normal", anchor=NW)
@@ -195,6 +201,7 @@ class VisualImage(object):
         self.canvas.pack()
         self.root.after(1, self.animation)
         self.root.mainloop()
+
 
     def DeathMarch(self):
         if not self.paused:
