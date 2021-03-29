@@ -54,7 +54,7 @@ def CanvasToPixels(canvas):
                 nuCanvas[x][y]=[0, 0, 0]
     return nuCanvas
 
-def FormImage(canvas):
+def FormImage(canvas, ask=True):
     #canvas = CanvasToPixels(canvas)
     npCanvas = np.asarray(canvas)
 
@@ -70,7 +70,10 @@ def FormImage(canvas):
     #open image
     im = Image.open(fileName)  
     im.show()
-    inp = input("type 'del' to delete that image or 're' to rename it: ")
+    if(ask):
+        inp = input("type 'del' to delete that image or 're' to rename it: ")
+    else:
+        inp = "keep"
     if inp.lower() == "del":
         remove(fileName)
         print("file deleted")

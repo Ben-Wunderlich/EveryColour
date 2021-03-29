@@ -1,14 +1,18 @@
 from random import randint
+from tkinter.constants import NW
 import imagemaker as im
 from PIL import Image
 
-WIDTH = 600
-HEIGHT = 600
+from tkinter import Canvas, PhotoImage, TclError, Tk
+from time import sleep
+
+WIDTH = 400
+HEIGHT = 400
 
 START_COLOUR = (200, 200, 200)
 
-TARGET_COLOUR = None
-#TARGET_COLOUR = (250, 221, 127)#The colour it wants to go towards
+#TARGET_COLOUR = None
+TARGET_COLOUR = (250, 221, 127)#The colour it wants to go towards
 SKEW=1#how much it wants to go towards TARGET_COLOUR
 
 START_LOCATIONS = [(randint(0, WIDTH-1), randint(0,HEIGHT-1))]
@@ -18,7 +22,7 @@ canvas = im.MakeCanvas(WIDTH, HEIGHT)
 
 #must start out with one partially explored
 
-#if has some value but not all neighbors explored
+#if has some value but not all neighbors exploreds
 #this method shaves time for 1920x1080 image down to around 60secs
 partialExplored = dict()
 highestInd=0
@@ -28,9 +32,9 @@ highestInd=0
 
 #value has form (r,g,b)
 def OneDiffPixel(value):
-    pixelMod = -6
+    pixelMod = -7
     if(randint(0,1)==1):
-        pixelMod = 6
+        pixelMod = 7
 
     pixelPart = randint(0, 2)
     result = None
@@ -67,26 +71,31 @@ def NewPixelValue(location):
     newVal = OneDiffPixel(currentValue)
     return newVal
 
-def Explore(xLocation, yLocation, pixelValue):
+def toHexa(pixVal):
+    return '#%02x%02x%02x' % pixVal
+
+def Explore(xLocation, yLocation, pixelValue, img=None):
     AddToDict((xLocation, yLocation))
     canvas[xLocation][yLocation] = pixelValue
+    if img is not None:
+        img.put(toHexa(pixelValue), (xLocation, yLocation))
 
-def VisitPixel(location, index):
+def VisitPixel(location, index, img=None):
     global highestInd
     newPixel = NewPixelValue(location)
 
     #check if filled pixel in each direction
     if ValidToExplore(location[0]+1, location[1]):#right
-        Explore(location[0]+1, location[1], newPixel)
+        Explore(location[0]+1, location[1], newPixel, img)
 
     elif ValidToExplore(location[0], location[1]-1):#down
-        Explore(location[0], location[1]-1, newPixel)
+        Explore(location[0], location[1]-1, newPixel, img)
 
     elif ValidToExplore(location[0]-1, location[1]):#left
-        Explore(location[0]-1, location[1], newPixel)
+        Explore(location[0]-1, location[1], newPixel, img)
 
     elif ValidToExplore(location[0], location[1]+1):#up
-        Explore(location[0], location[1]+1, newPixel)
+        Explore(location[0], location[1]+1, newPixel, img)
 
     else:#nowhere is valid
         # partialExplored.remove(location)
@@ -114,7 +123,7 @@ def RGBify(pixel):
         return (pixel[0], pixel[1], pixel[2])
 
 #if numPixel is 4 will pick every 4th pixel to add to image
-def MakeFromFile(fileName="luca.jpg", numPixels=80, robotic=False):
+def MakeFromFile(fileName="bases\\luca.jpg", numPixels=80, robotic=False):
     global WIDTH
     global HEIGHT
     global canvas
@@ -140,6 +149,7 @@ def MakeFromFile(fileName="luca.jpg", numPixels=80, robotic=False):
             counter+=1
 
     print("done initializiing from file")
+    return canvas
 
 #not really useful anymore
 def CheckForErrors(canvas):
@@ -151,51 +161,98 @@ def CheckForErrors(canvas):
                 if type(pixel) != int:
                     print("ERROR", el)
 
-def ExpandFromPixels():
-    #choose from random pixel
-    i=0
-    while len(partialExplored) > 0:
-        i+=1
-        #nextInd = 0#vertical lines
-        #nextInt = len(partialExplored)-1 #horizontal lines
-        nextInd = randint(0, len(partialExplored)-1)#normal
-        #nextInd = randint(0, 1)# looks wack
 
-        # if len(partialExplored) > 5:#coral patttern
-        #     nextInd = randint(0,4)
-        # else: 
-        #     nextInd=0
-
-        # if randint(0,15)==0:#inside of rock 
-        #     nextInd = randint(0, len(partialExplored)-1)
-        # else:
-        #     nextInd=len(partialExplored)-1
-
-        nextLocation= partialExplored[nextInd]
-
-        VisitPixel(nextLocation, nextInd)
-    return i
+def MakeImageBlack(img, width, height):
+    for x in range(width):
+        for y in range(height):
+            img.put("#000000", (x,y))
 
 
+#base code from https://stackoverflow.com/a/13215255
+class VisualImage(object):
+    def __init__(self):
+        self.root = Tk()
+        self.root.configure(bg='black')
+        self.paused=True
 
-def Main():
-    print("starting image generation ({}x{}) = {:,} pixels".format(WIDTH, HEIGHT, WIDTH*HEIGHT))
+        #MakeFromFile("bases\\luca.jpg", 150)
 
-    #can only have one MakeFromFile otherwise will probably crash
-    #MakeFromFile("bases\\P1250945.png", 100)
-    #MakeFromFile("bases\\luca.jpg", 80)
-    #MakeFromFile("bases\\viridy.png")
-    #MakeFromFile("bases\\unknown.png", 200)
 
-    for location in START_LOCATIONS:
-        Explore(location[0], location[1], START_COLOUR)
+        def PauseToggle(event):
+            if(event.char == 'p'):
+                self.paused = not self.paused
+            if self.paused:
+                print("pauseing")
+            else:
+                print("no longer paused")
 
-    stepsTaken = ExpandFromPixels()
-    #CheckForErrors(canvas)
+        self.root.bind("<Key>", PauseToggle)
+        self.canvas = Canvas(self.root, width=WIDTH, height = HEIGHT)
+        self.root.protocol('WM_DELETE_WINDOW', self.DeathMarch)
 
-    print("it took {:,} steps".format(stepsTaken))
-    print("there are {:,} duplicate pixels".format(CheckDuplicates(canvas)))
-    print("creating image...\n")
-    im.FormImage(canvas)
+        self.canvas.pack()
+        for location in START_LOCATIONS:
+            Explore(location[0], location[1], START_COLOUR)
 
-Main()
+        self.img = PhotoImage(width=WIDTH, height=HEIGHT)
+        MakeImageBlack(self.img, WIDTH, HEIGHT)
+        self.canvas.create_image((0, 0), image=self.img, state="normal", anchor=NW)
+
+        self.canvas.pack()
+        self.root.after(1, self.animation)
+        self.root.mainloop()
+
+
+    def DeathMarch(self):
+        if not self.paused:
+            self.root.destroy()
+            return
+        self.paused=False
+        self.root.after(20, self.DeathMarch)
+
+    def SpinLoop(self):
+        if self.paused:
+            self.root.after(20, self.SpinLoop)
+
+    def animation(self):
+        #sleep(5)
+        i=0
+        while len(partialExplored) > 0:
+            #sleep(0.001)
+            if self.paused:
+                self.SpinLoop()
+
+            i+=1
+            #nextInd = 0#vertical lines
+            #nextInd = len(partialExplored)-1 #horizontal lines
+            nextInd = randint(0, len(partialExplored)-1)#normal
+            # nextInd=0
+            # if len(partialExplored) > 2:#just for last pixel
+            #     nextInd = randint(0, 1)# looks wack
+
+            # if len(partialExplored) > 4:#coral patttern
+            #     nextInd = randint(0,4)
+            # else: 
+            #     nextInd=0
+
+            # if randint(0,15)==0:#geode
+            #     nextInd = randint(0, len(partialExplored)-1)
+            # else:
+            #     nextInd=len(partialExplored)-1
+
+            nextLocation= partialExplored[nextInd]
+
+
+            
+            try:
+                VisitPixel(nextLocation, nextInd, self.img)
+                self.canvas.update()
+            except TclError:
+                print("closed early")
+                return
+        print("finished")
+        if input("create image from it?(y/n)") == "y":
+            im.FormImage(canvas, False)
+
+
+VisualImage()
