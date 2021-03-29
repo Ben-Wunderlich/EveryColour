@@ -10,8 +10,8 @@ HEIGHT = 400
 
 START_COLOUR = (200, 200, 200)
 
-TARGET_COLOUR = None
-#TARGET_COLOUR = (250, 221, 127)#The colour it wants to go towards
+#TARGET_COLOUR = None
+TARGET_COLOUR = (250, 221, 127)#The colour it wants to go towards
 SKEW=1#how much it wants to go towards TARGET_COLOUR
 
 START_LOCATIONS = [(randint(0, WIDTH-1), randint(0,HEIGHT-1))]
@@ -122,7 +122,7 @@ def RGBify(pixel):
         return (pixel[0], pixel[1], pixel[2])
 
 #if numPixel is 4 will pick every 4th pixel to add to image
-def MakeFromFile(fileName="luca.jpg", numPixels=80, robotic=False):
+def MakeFromFile(fileName="bases\\luca.jpg", numPixels=80, robotic=False):
     global WIDTH
     global HEIGHT
     global canvas
@@ -148,6 +148,7 @@ def MakeFromFile(fileName="luca.jpg", numPixels=80, robotic=False):
             counter+=1
 
     print("done initializiing from file")
+    return canvas
 
 #not really useful anymore
 def CheckForErrors(canvas):
@@ -185,6 +186,8 @@ class VisualImage(object):
         for location in START_LOCATIONS:
             Explore(location[0], location[1], START_COLOUR)
 
+        self.canvas = MakeFromFile()
+
         self.img = PhotoImage(width=WIDTH, height=HEIGHT)
         MakeImageBlack(self.img, WIDTH, HEIGHT)
         self.canvas.create_image((0, 0), image=self.img, state="normal", anchor=NW)
@@ -214,8 +217,8 @@ class VisualImage(object):
 
             i+=1
             #nextInd = 0#vertical lines
-            nextInd = len(partialExplored)-1 #horizontal lines
-            #nextInd = randint(0, len(partialExplored)-1)#normal
+            #nextInd = len(partialExplored)-1 #horizontal lines
+            nextInd = randint(0, len(partialExplored)-1)#normal
             # nextInd=0
             # if len(partialExplored) > 2:#just for last pixel
             #     nextInd = randint(0, 1)# looks wack
