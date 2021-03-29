@@ -6,17 +6,24 @@ from PIL import Image
 from tkinter import Canvas, PhotoImage, TclError, Tk
 from time import sleep
 
-WIDTH = 400
-HEIGHT = 400
+WIDTH = 700
+HEIGHT = 700
 
+VISUALIZE_PROCESS = False
 START_COLOUR = (200, 200, 200)
+
+MAKE_FROM_FILE = None
+#MAKE_FROM_FILE = ("bases\\luca.jpg", 20)
 
 #TARGET_COLOUR = None
 TARGET_COLOUR = (250, 221, 127)#The colour it wants to go towards
 SKEW=1#how much it wants to go towards TARGET_COLOUR
 
 START_LOCATIONS = [(randint(0, WIDTH-1), randint(0,HEIGHT-1))]
+POS_MOD=5
+NEG_MOD=-5
 #(randint(0, WIDTH-1), randint(0,HEIGHT-1))
+
 
 canvas = im.MakeCanvas(WIDTH, HEIGHT)
 
@@ -30,11 +37,31 @@ highestInd=0
 
 #takenColours=set()#can be used to make all colours unique but doesnt make it look more interesting
 
+#XXX edit mostly here
+def GetNextLocation():
+        #nextInd = 0#vertical lines
+        #nextInt = len(partialExplored)-1 #horizontal lines
+        #nextInd = randint(0, len(partialExplored)-1)#normal
+        #nextInd = randint(0, 1)# looks wack
+
+        if len(partialExplored) > 5:#coral patttern
+            nextInd = randint(0,4)
+        else: 
+            nextInd=0
+
+        # if randint(0,15)==0:#inside of rock 
+        #     nextInd = randint(0, len(partialExplored)-1)
+        # else:
+        #     nextInd=len(partialExplored)-1
+
+        nextLocation= partialExplored[nextInd]
+        return (nextLocation, nextInd)
+
 #value has form (r,g,b)
 def OneDiffPixel(value):
-    pixelMod = -7
+    pixelMod = NEG_MOD
     if(randint(0,1)==1):
-        pixelMod = 7
+        pixelMod = POS_MOD
 
     pixelPart = randint(0, 2)
     result = None
@@ -47,9 +74,9 @@ def OneDiffPixel(value):
         result= [value[0], value[1], value[2]+pixelMod]
 
     if TARGET_COLOUR is not None:
-        if result[pixelPart] < TARGET_COLOUR[pixelPart] and pixelMod > 0:
+        if randint(0,1)==1 and result[pixelPart] < TARGET_COLOUR[pixelPart] and pixelMod > 0:
             result[pixelPart]+=SKEW
-        elif result[pixelPart] > TARGET_COLOUR[pixelPart] and pixelMod < 0:
+        elif randint(0,1)==1 and result[pixelPart] > TARGET_COLOUR[pixelPart] and pixelMod < 0:
             result[pixelPart]-=SKEW
 
     for part in result:
@@ -127,6 +154,7 @@ def MakeFromFile(fileName="bases\\luca.jpg", numPixels=80, robotic=False):
     global WIDTH
     global HEIGHT
     global canvas
+    global START_LOCATIONS
 
     img = Image.open(fileName, 'r') # Can be many different formats
     pix = img.load()
@@ -167,40 +195,60 @@ def MakeImageBlack(img, width, height):
         for y in range(height):
             img.put("#000000", (x,y))
 
+def ExpandFromPixels():
+    #choose from random pixel
+    i=0
+    while len(partialExplored) > 0:
+        i+=1
+        nextLocation, nextInd = GetNextLocation()
+
+        VisitPixel(nextLocation, nextInd)
+    return i
 
 #base code from https://stackoverflow.com/a/13215255
 class VisualImage(object):
     def __init__(self):
-        self.root = Tk()
-        self.root.configure(bg='black')
-        self.paused=True
-
-        #MakeFromFile("bases\\luca.jpg", 150)
+        if MAKE_FROM_FILE is not None:
+            MakeFromFile(*MAKE_FROM_FILE)
 
 
-        def PauseToggle(event):
-            if(event.char == 'p'):
-                self.paused = not self.paused
-            if self.paused:
-                print("pauseing")
-            else:
-                print("no longer paused")
+        if VISUALIZE_PROCESS:
+            self.root = Tk()
+            self.root.configure(bg='black')
+            self.paused=True
 
-        self.root.bind("<Key>", PauseToggle)
-        self.canvas = Canvas(self.root, width=WIDTH, height = HEIGHT)
-        self.root.protocol('WM_DELETE_WINDOW', self.DeathMarch)
+            def PauseToggle(event):
+                if(event.char == 'p'):
+                    self.paused = not self.paused
+                if self.paused:
+                    print("pauseing")
+                else:
+                    print("no longer paused")
 
-        self.canvas.pack()
+            self.root.bind("<Key>", PauseToggle)
+            self.canvas = Canvas(self.root, width=WIDTH, height = HEIGHT)
+            self.root.protocol('WM_DELETE_WINDOW', self.DeathMarch)
+
+            self.canvas.pack()
         for location in START_LOCATIONS:
             Explore(location[0], location[1], START_COLOUR)
 
-        self.img = PhotoImage(width=WIDTH, height=HEIGHT)
-        MakeImageBlack(self.img, WIDTH, HEIGHT)
-        self.canvas.create_image((0, 0), image=self.img, state="normal", anchor=NW)
+        if VISUALIZE_PROCESS:
+            self.img = PhotoImage(width=WIDTH, height=HEIGHT)
+            MakeImageBlack(self.img, WIDTH, HEIGHT)
+            self.canvas.create_image((0, 0), image=self.img, state="normal", anchor=NW)
 
-        self.canvas.pack()
-        self.root.after(1, self.animation)
-        self.root.mainloop()
+            self.canvas.pack()
+            self.root.after(1, self.animation)
+            self.root.mainloop()
+        else:
+            print("starting image generation ({}x{}) = {:,} pixels".format(WIDTH, HEIGHT, WIDTH*HEIGHT))
+            stepsTaken = ExpandFromPixels()
+            print("it took {:,} steps".format(stepsTaken))
+            print("there are {:,} duplicate pixels".format(CheckDuplicates(canvas)))
+            print("creating image...\n")
+            im.FormImage(canvas)
+
 
 
     def DeathMarch(self):
@@ -223,26 +271,8 @@ class VisualImage(object):
                 self.SpinLoop()
 
             i+=1
-            #nextInd = 0#vertical lines
-            #nextInd = len(partialExplored)-1 #horizontal lines
-            nextInd = randint(0, len(partialExplored)-1)#normal
-            # nextInd=0
-            # if len(partialExplored) > 2:#just for last pixel
-            #     nextInd = randint(0, 1)# looks wack
 
-            # if len(partialExplored) > 4:#coral patttern
-            #     nextInd = randint(0,4)
-            # else: 
-            #     nextInd=0
-
-            # if randint(0,15)==0:#geode
-            #     nextInd = randint(0, len(partialExplored)-1)
-            # else:
-            #     nextInd=len(partialExplored)-1
-
-            nextLocation= partialExplored[nextInd]
-
-
+            nextLocation, nextInd = GetNextLocation()
             
             try:
                 VisitPixel(nextLocation, nextInd, self.img)
