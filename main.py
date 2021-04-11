@@ -1,29 +1,32 @@
 from random import randint
 from tkinter.constants import NW
 import imagemaker as im
+from randict import randict
 from PIL import Image
 
 from tkinter import Canvas, PhotoImage, TclError, Tk
 from time import sleep
 
-WIDTH = 700
-HEIGHT = 700
+WIDTH = 500
+HEIGHT = 400
 
 VISUALIZE_PROCESS = False
 START_COLOUR = (200, 200, 200)
 
 MAKE_FROM_FILE = None
-#MAKE_FROM_FILE = ("bases\\luca.jpg", 20)
+#MAKE_FROM_FILE = ("bases\\hellovader.jpg", 50)
 
-#TARGET_COLOUR = None
-TARGET_COLOUR = (250, 221, 127)#The colour it wants to go towards
+TARGET_COLOUR = None
+#TARGET_COLOUR = (250, 221, 127)#The colour it wants to go towards
+#TARGET_COLOUR = (255, 255, 255)
 SKEW=1#how much it wants to go towards TARGET_COLOUR
 
-START_LOCATIONS = [(randint(0, WIDTH-1), randint(0,HEIGHT-1))]
-POS_MOD=5
-NEG_MOD=-5
+START_LOCATIONS = [(WIDTH//2, HEIGHT//2)]
+#(WIDTH//2, HEIGHT//2)
 #(randint(0, WIDTH-1), randint(0,HEIGHT-1))
 
+POS_MOD=5#how much to add to pixel
+NEG_MOD=-5#how much to subtract from a pixel
 
 canvas = im.MakeCanvas(WIDTH, HEIGHT)
 
@@ -31,30 +34,26 @@ canvas = im.MakeCanvas(WIDTH, HEIGHT)
 
 #if has some value but not all neighbors exploreds
 #this method shaves time for 1920x1080 image down to around 60secs
-partialExplored = dict()
-highestInd=0
+partialExplored = randict()
 #each value will have form (x, y) where x and y are position in the image
 
 #takenColours=set()#can be used to make all colours unique but doesnt make it look more interesting
 
-#XXX edit mostly here
 def GetNextLocation():
         #nextInd = 0#vertical lines
-        #nextInt = len(partialExplored)-1 #horizontal lines
-        #nextInd = randint(0, len(partialExplored)-1)#normal
-        #nextInd = randint(0, 1)# looks wack
+        #nextInd = len(partialExplored)-1 #horizontal lines
+        
+        return partialExplored.GetRandomElement()#normal
 
-        if len(partialExplored) > 5:#coral patttern
-            nextInd = randint(0,4)
-        else: 
-            nextInd=0
+        #nextInd = randint(0,4)#coral
 
-        # if randint(0,15)==0:#inside of rock 
-        #     nextInd = randint(0, len(partialExplored)-1)
+        # if randint(0,30)==0:#inside of rock 
+        #     return partialExplored.GetRandomElement()#normal
         # else:
         #     nextInd=len(partialExplored)-1
 
-        nextLocation= partialExplored[nextInd]
+
+        nextLocation= partialExplored.GetElementAt(nextInd)
         return (nextLocation, nextInd)
 
 #value has form (r,g,b)
@@ -102,7 +101,7 @@ def toHexa(pixVal):
     return '#%02x%02x%02x' % pixVal
 
 def Explore(xLocation, yLocation, pixelValue, img=None):
-    AddToDict((xLocation, yLocation))
+    partialExplored.AddElement((xLocation, yLocation))
     canvas[xLocation][yLocation] = pixelValue
     if img is not None:
         img.put(toHexa(pixelValue), (xLocation, yLocation))
@@ -125,10 +124,7 @@ def VisitPixel(location, index, img=None):
         Explore(location[0], location[1]+1, newPixel, img)
 
     else:#nowhere is valid
-        # partialExplored.remove(location)
-        partialExplored[index] = partialExplored[highestInd]
-        del partialExplored[highestInd]#tried using highestInd instead of del but were both 49secs for 1920x1080
-        highestInd-=1
+        partialExplored.RemoveElement(index)
 
 def CheckDuplicates(canvas):
     distinctCols = set()
@@ -136,12 +132,6 @@ def CheckDuplicates(canvas):
         for el in col:
             distinctCols.add(el)
     return (WIDTH*HEIGHT) - len(distinctCols)
-
-
-def AddToDict(el):
-    global highestInd
-    highestInd = len(partialExplored)
-    partialExplored[highestInd] = el
 
 def RGBify(pixel):
     if len(pixel) == 3:

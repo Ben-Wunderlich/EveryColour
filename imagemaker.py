@@ -4,7 +4,7 @@ from imageio import imwrite
 import random
 import string
 import os.path as op
-from os import remove, rename
+from os import remove, rename, mkdir
 from PIL import Image
 from pathvalidate import sanitize_filename
 
@@ -57,6 +57,9 @@ def CanvasToPixels(canvas):
 def FormImage(canvas, ask=True):
     #canvas = CanvasToPixels(canvas)
     npCanvas = np.asarray(canvas)
+
+    if not op.exists("results"):
+        mkdir("results")
 
     #this is here because I visualized my array differently than the people who made the modules
     npCanvas = np.swapaxes(npCanvas,0,1)
